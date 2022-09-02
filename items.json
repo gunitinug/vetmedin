@@ -1,0 +1,38 @@
+[
+    {
+	"id": 0,
+	"desc": "sarang_morning_heart_med"
+    },
+    {
+	"id": 1,
+	"desc": "my_morning_meds"
+    },
+    {
+	"id": 2,
+	"desc": "sarang_breakfast"
+    },
+    {
+	"id": 3,
+	"desc": "sarang_morning_lawn_walk"
+    },
+    {
+	"id": 4,
+	"desc": "sarang_lunch"
+    },
+    {
+	"id": 5,
+	"desc": "sarang_dinner"
+    },
+    {
+	"id": 6,
+	"desc": "sarang_evening_heart_med"
+    },
+    {
+	"id": 7,
+	"desc": "my_C_med_at_night"
+    },
+    {
+	"id": 8,
+	"desc": "my_evening_meds"
+    }
+]
