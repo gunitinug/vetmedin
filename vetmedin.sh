@@ -20,6 +20,15 @@
 #
 #
 
+validate_date () {
+    local d=$1
+    local n=0
+    
+    # validate d
+    n=$(date -d "$d" &>/dev/null; echo $?)
+    [[ $n -gt 0 ]] && echo 1 || echo 0
+}
+
 # try parsing
 YEAR_MONTH=""
 YEAR_MONTH_DAY=""
@@ -147,7 +156,9 @@ edit_old_entry () {
     # update data.json here.
     # first remove original entry with the matching $secs_epoch,
     # then add the replacement OLD_DATA.
-    jq --argjson s "$secs_epoch" 'del(.[]|select(.secs_epoch==$s))' data.json | jq --argjson d "$OLD_DATA" '.+[$d]' > test.txt
+    jq --argjson s "$secs_epoch" 'del(.[]|select(.secs_epoch==$s))' data.json | jq --argjson d "$OLD_DATA" '.+[$d]' > /tmp/vetmedin-edit_old_entry.json
+    cp /tmp/vetmedin-edit_old_entry.json data.json
+    rm /tmp/vetmedin-edit_old_entry.json
 
 }
 
@@ -204,7 +215,9 @@ do_to_delete () {
     local args=("$@")
 
     for s in "${args[@]}"; do
-	 jq --argjson s "$s" 'del(.[]|select(.secs_epoch==$s))' data.json
+	jq --argjson s "$s" 'del(.[]|select(.secs_epoch==$s))' data.json > /tmp/vetmedin-do_to_delete.json
+	cp /tmp/vetmedin-do_to_delete.json data.json
+	rm /tmp/vetmedin-do_to_delete.json
     done
 }
 
@@ -283,10 +296,27 @@ NEW_DATA=$(cat <<END
 END
 )
 
+date_ane=""
 str_ane=""
 
 add_new_entry () {
-    local secs_epoch=$(date -d "$(date +'%d %b %Y')" +%s)
+    while :; do
+	local chk=1
+	date_ane=$(whiptail --inputbox "Provide date(eg. 20 aug 2023 12:00 or 'now')" 8 39 --title "Date" 3>&1 1>&2 2>&3)
+	local cancel="$?"
+
+	# if selected 'cancel' then return to main menu.
+	[[ "$cancel" -gt 0 ]] && return 1
+	
+	[[ "$date_ane" == "now" ]] && date_ane=$(date +'%e %b %G %H:%M') && break
+	
+	local pattern="^[0-9]{1,2} [A-Za-z]{3,9} [0-9]{4} [0-9]{1,2}:[0-9]{1,2}$"
+	[[ -n "$date_ane"  ]] && [[ "$cancel" -eq 0 ]] && [[ $(validate_date "$date_ane") -eq 0 ]] && [[ "$date_ane" =~ $pattern ]] && chk=0
+	[[ "$chk" -eq 0 ]] && break	
+    done
+
+    #local secs_epoch=$(date -d "$(date +'%d %b %Y')" +%s)
+    local secs_epoch="$date_ane"
     local desc=""
     local yn=""
 
@@ -339,7 +369,9 @@ add_new_entry () {
     done
 
     # update data.json here.
-    jq --argjson d "$NEW_DATA" '.+[$d]' data.json
+    jq --argjson d "$NEW_DATA" '.+[$d]' data.json > /tmp/vetmedin-add_new_entry.json
+    cp /tmp/vetmedin-add_new_entry.json data.json
+    rm /tmp/vetmedin-add_new_entry.json
 }
 
 #add_new_entry
