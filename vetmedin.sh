@@ -195,9 +195,86 @@ show_year_month () {
     show_year_month_day $sel_sym
 }
 
-show_year_month
+# main menu entry
+edit_entry () {
+    show_year_month
+}
 
-# add new entry
+do_to_delete () {
+    local args=("$@")
+
+    for s in "${args[@]}"; do
+	 jq --argjson s "$s" 'del(.[]|select(.secs_epoch==$s))' data.json
+    done
+}
+
+sel_symdfd=""
+sel_symdfd_y=""
+
+show_year_month_day_for_deletion () {
+    local ym="$1"
+    ym=${ym#*+}
+
+    local lines=""
+    local p1=$(echo $ym | cut -d+ -f1)
+    local p2=$(echo $ym | cut -d+ -f2)
+
+    # test: ym   PASS!
+    #echo ym: $ym
+
+    # test: p1, p2   PASS!
+    #echo p1: $p1 p2: $p2
+    
+    lines=$(echo $year_month_day | grep -Po "$p1\+$p2.+?%" | sed -E 's/%$//')
+    lines=${lines#*:}
+
+    # test: lines   PASS!
+    #echo lines: $lines
+
+    local str=""
+
+    while read line; do
+	local d_=$(date -d @$line)
+	d_=$(echo $d_ | tr ' ' '_')
+	str+="$line ________Entry_${d_} OFF "
+    done < <(echo "$lines" | tr ':' '\n')
+
+    sel_symdfd=$(whiptail --title "Delete entries" --checklist "Choose entries for deletion" 20 78 10 $str 3>&1 1>&2 2>&3)
+
+    local to_delete=()
+    local to_del_h=()
+    while read sel_symdfd_; do
+	sel_symdfd_=$(echo $sel_symdfd_ | tr -d '"')
+
+        # construct array
+	to_delete+=("$sel_symdfd_")
+	to_del_h+=("$(date -d @"$sel_symdfd_") |")
+	
+    done < <(echo "$sel_symdfd" | tr ' ' '\n')
+
+    # yes no to confirm
+    sel_symdfd_y=$(whiptail --title "Are you sure to delete?" --yesno "${to_del_h[*]}" 8 78 3>&1 1>&2 2>&3)
+    [[ $? -eq 0 ]] && do_to_delete "${to_delete[@]}" || return 1
+}
+
+show_year_month_for_deletion () {
+    local str=""
+
+    while read line; do
+	# echo line: "$line"   PASS!
+	str+="$line __________Entries_from_$(echo $line | cut -d+ -f3)_$(echo $line | cut -d+ -f2) "
+    done < <(echo "$YEAR_MONTH" | tr ':' '\n')
+
+    sel_sym=$(whiptail --title "VETMEDIN" --menu "Entries" 25 78 16 $str 3>&1 1>&2 2>&3)
+    show_year_month_day_for_deletion $sel_sym
+}
+
+# main menu entry
+delete_entries () {
+    show_year_month_for_deletion
+}
+
+# add new entry - main menu item
 # list all items
 # show checklst and toggle items yes/no
 
@@ -262,6 +339,7 @@ add_new_entry () {
     done
 
     # update data.json here.
+    jq --argjson d "$NEW_DATA" '.+[$d]' data.json
 }
 
 #add_new_entry
@@ -281,3 +359,31 @@ add_bulk () {
 }
 
 #add_bulk
+
+
+# main menu
+while :; do
+    sel=$(whiptail --title "VETMEDIN" --menu "Daily chore checklist" 25 78 16 \
+       "ADD_ENTRY" "Add new entry" \
+       "EDIT_ENTRY" "Find entry to edit" \
+       "DELETE_ENTRIES" "Delete entries" \
+       "QUIT" "Quit" 3>&1 1>&2 2>&3)
+
+
+    case "$sel" in
+	"ADD_ENTRY")
+	    add_new_entry
+	    ;;
+	"EDIT_ENTRY")
+	    edit_entry
+	    ;;
+	"DELETE_ENTRIES")
+	    delete_entries
+	    ;;
+	"QUIT")
+	    break
+	    ;;
+	*)
+	    ;;
+    esac
+done
