@@ -88,9 +88,13 @@ construct_YEAR_MONTH () {
 #echo YEAR_MONTH:
 #echo "$YEAR_MONTH"
 
-construct_year_month
-construct_year_month_day
-construct_YEAR_MONTH
+
+
+#construct_year_month
+#construct_year_month_day
+#construct_YEAR_MONTH
+
+
 #echo year_month
 #echo "$year_month"
 #echo YEAR_MONTH
@@ -394,6 +398,14 @@ add_bulk () {
 
 
 # main menu
+year_month=""
+year_month_day=""
+YEAR_MONTH=""
+
+construct_year_month
+construct_year_month_day
+construct_YEAR_MONTH
+
 while :; do
     sel=$(whiptail --title "VETMEDIN" --menu "Daily chore checklist" 25 78 16 \
        "ADD_ENTRY" "Add new entry" \
@@ -405,12 +417,26 @@ while :; do
     case "$sel" in
 	"ADD_ENTRY")
 	    add_new_entry
+
+	    year_month=""
+	    year_month_day=""
+	    YEAR_MONTH=""
+	    construct_year_month
+	    construct_year_month_day
+	    construct_YEAR_MONTH
 	    ;;
 	"EDIT_ENTRY")
 	    edit_entry
 	    ;;
 	"DELETE_ENTRIES")
 	    delete_entries
+
+	    year_month=""
+	    year_month_day=""
+	    YEAR_MONTH=""
+	    construct_year_month
+	    construct_year_month_day
+	    construct_YEAR_MONTH
 	    ;;
 	"QUIT")
 	    break
