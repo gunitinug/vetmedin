@@ -316,7 +316,7 @@ add_new_entry () {
     done
 
     #local secs_epoch=$(date -d "$(date +'%d %b %Y')" +%s)
-    local secs_epoch="$date_ane"
+    local secs_epoch=$(date -d "$date_ane" +%s)
     local desc=""
     local yn=""
 
@@ -331,7 +331,7 @@ add_new_entry () {
 
     local done=1
     while :; do
-	sel_ane=$(whiptail --title "Daily checklist" --checklist "Toggle Y or N each item" 20 78 10 "DONE" "Done" ON $str_ane 3>&1 1>&2 2>&3)
+	sel_ane=$(whiptail --title "Daily checklist" --checklist "$date_ane Toggle Y or N each item" 20 78 10 "DONE" "Done" ON $str_ane 3>&1 1>&2 2>&3)
 	#local count=$(echo "$sel_ane" | tr ' ' '\n' | wc -l)
 
 	#echo count: $count
