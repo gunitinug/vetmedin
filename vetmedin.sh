@@ -338,6 +338,11 @@ add_new_entry () {
 	sel_ane=$(whiptail --title "Daily checklist" --checklist "$date_ane Toggle Y or N each item" 20 78 10 "DONE" "Done" ON $str_ane 3>&1 1>&2 2>&3)
 	#local count=$(echo "$sel_ane" | tr ' ' '\n' | wc -l)
 
+	# handle case where sel_ane is empty string or cancelled.
+	local cancel2=$?
+	[[ -z "$sel_ane" ]] && return 1
+	[[ "$cancel2" -gt 0 ]] && return 1
+	
 	#echo count: $count
 	
 	while read sel_ane_; do
