@@ -410,6 +410,76 @@ add_new_entry () {
 #add_new_entry
 #echo "$NEW_DATA"
 
+# main menu entry
+report () {
+    # get date1 and date2 from inputboxes
+
+    local date1=""
+    local date2=""
+    local today=1
+
+    local pattern="^[0-9]{1,2} [A-Za-z]{3,9} [0-9]{4} [0-9]{1,2}:[0-9]{1,2}(:[0-9]{1,2}){0,1}$"
+    local pattern2="^[0-9]+ (min|hour|day|week|month|year)s{0,1} ago$"
+    local usage="eg. 20 aug 2023 9:15 or 20 aug 2023 9:15:10 or 10 min ago or 1 hour ago or 4 day ago or 2 week ago or 3 month ago or 1 year ago"
+    
+    while :; do
+	date1=$(whiptail --inputbox "Provide first date from range (just 'all' or 'today' or 'yesterday' or $usage)" 12 49 --title "Date range" 3>&1 1>&2 2>&3)
+	if [[ "$date1" == "today" ]]; then
+		# assign to date1 and date2
+		date1="$(date +'%e %b %G') 0:0:0" 
+		date2="$(date +'%e %b %G') 23:59:59"
+		today=0
+		break
+	elif [[ "$date1" == "yesterday" ]]; then
+		date1="$(date -d "yesterday" +'%e %b %G') 0:0:0" 
+		date2="$(date -d "yesterday" +'%e %b %G') 23:59:59"
+		today=0
+		break
+	elif [[ "$date1" == "all" ]]; then
+	        date1=$(date -d "1 jan 1970")
+	        date2=$(date -d "1 jan 3000")
+		today=0
+		break
+	else
+		[[ -n "$date1"  ]] && [[ "$?" -eq 0 ]] && [[ $(validate_date "$date1") -eq 0 ]] && [[ "$date1" =~ $pattern || "$date1" =~ $pattern2  ]] && break
+	fi
+    done
+
+
+    if [[ "$today" -eq 1 ]]; then
+	while :; do
+		date2=$(whiptail --inputbox "Provide second date from range ($usage)" 10 49 --title "Date range" 3>&1 1>&2 2>&3)
+		[[ -n "$date2"  ]] && [[ "$?" -eq 0 ]] && [[ $(validate_date "$date2") -eq 0 ]] && [[ "$date2" =~ $pattern || "$date2" =~ $pattern2 ]] && break
+	done
+    fi    
+    
+    #local date1="1 Feb 2019 00:00:00"
+    #local date2="10 Feb 2019 00:00:00"
+    local s1=$(date -d "$date1" +%s)
+    local s2=$(date -d "$date2" +%s)
+
+    [[ "$s1" -gt "$s2" ]] && return 1
+    
+    # display report in msgbox
+    # secs_epoch|id|t -> date|desc|t
+    #local feed=$(jq -r '.[]|(.secs_epoch) as $s|.items[]|.id as $id|.t as $t|($s|tostring)+"|"+($id|tostring)+"|"+$t' data.json | sort)
+    local feed=$(jq -r --argjson s1 "$s1" --argjson s2 "$s2" '.[]|select(.secs_epoch>=$s1 and .secs_epoch<=$s2)|(.secs_epoch) as $s|.items[]|.id as $id|.t as $t|($s|tostring)+"|"+($id|tostring)+"|"+$t' data.json | sort)
+    local str=""
+    
+    while read f; do
+	local date=$(date -d @"$(echo "$f" | cut -d'|' -f1)")
+	local id=$(echo "$f" | cut -d'|' -f2)
+	local t=$(echo "$f" | cut -d'|' -f3)
+	local desc=$(jq -r --argjson i "$id" '.[]|select(.id==$i)|.desc' items.json)
+
+	str+="${date}|${desc}|${t}\n"
+    done <<<"$feed"
+
+    str=$(echo -e "$str" | sed '${/^$/d}')
+    
+    whiptail --scrolltext --title "Report" --msgbox "$str" 30 78
+}
+
 # add bulk of entires for testing
 add_bulk () {
     while read s; do
@@ -440,6 +510,7 @@ while :; do
        "ADD_ENTRY" "Add new entry" \
        "EDIT_ENTRY" "Find entry to edit" \
        "DELETE_ENTRIES" "Delete entries" \
+       "REPORT" "See report" \
        "QUIT" "Quit" 3>&1 1>&2 2>&3)
 
 
@@ -466,6 +537,9 @@ while :; do
 	    construct_year_month
 	    construct_year_month_day
 	    construct_YEAR_MONTH
+	    ;;
+	"REPORT")
+	    report
 	    ;;
 	"QUIT")
 	    break
