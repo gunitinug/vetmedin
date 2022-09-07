@@ -412,6 +412,10 @@ add_new_entry () {
 
 # main menu entry
 report () {
+    # if data.json is empty then return
+    local empty=$(jq '.[]' data.json | jq -s 'length')
+    [[ $empty -eq 0 ]] && return 1
+
     # get date1 and date2 from inputboxes
 
     local date1=""
@@ -501,9 +505,13 @@ year_month=""
 year_month_day=""
 YEAR_MONTH=""
 
-construct_year_month
-construct_year_month_day
-construct_YEAR_MONTH
+no_entry=$(jq '.[]' data.json | jq -s 'length')
+
+if [[ $no_entry -gt 0 ]]; then
+    construct_year_month
+    construct_year_month_day
+    construct_YEAR_MONTH
+fi
 
 while :; do
     sel=$(whiptail --title "VETMEDIN" --menu "Daily chore checklist" 25 78 16 \
