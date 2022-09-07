@@ -123,6 +123,11 @@ edit_old_entry () {
 	sel_eoe=$(whiptail --title "Daily checklist" --checklist "Toggle Y or N each item" 20 78 10 "DONE" "Done" ON $str_eoe 3>&1 1>&2 2>&3)
 	#local count=$(echo "$sel_ane" | tr ' ' '\n' | wc -l)
 
+	local cancel__=$?
+	[[ -z "$sel_eoe" ]] && return 1
+	[[ "$cancel__" -gt 0 ]] && return 1
+	
+	
 	#echo count: $count
 	
 	while read sel_eoe_; do
@@ -195,6 +200,11 @@ show_year_month_day () {
     done < <(echo "$lines" | tr ':' '\n')
 
     sel_symd=$(whiptail --title "Entries from $p1 $p2" --radiolist "Choose entry to edit" 20 78 4 $str 3>&1 1>&2 2>&3)
+
+    local cancel=$?
+    [[ -z "$sel_symd" ]] && return 1
+    [[ "$cancel" -gt 0 ]] && return 1
+    
     edit_old_entry "$sel_symd"
 }
 
@@ -207,6 +217,11 @@ show_year_month () {
     done < <(echo "$YEAR_MONTH" | tr ':' '\n')
 
     sel_sym=$(whiptail --title "VETMEDIN" --menu "Entries" 25 78 16 $str 3>&1 1>&2 2>&3)
+
+    local cancel=$?
+    [[ -z "$sel_sym" ]] && return 1
+    [[ "$cancel" -gt 0 ]] && return 1
+    
     show_year_month_day $sel_sym
 }
 
