@@ -273,6 +273,10 @@ show_year_month_day_for_deletion () {
 
     sel_symdfd=$(whiptail --title "Delete entries" --checklist "Choose entries for deletion" 20 78 10 $str 3>&1 1>&2 2>&3)
 
+    local cancel__=$?
+    [[ -z "$sel_symdfd" ]] && return 1
+    [[ "$cancel__" -gt 0 ]] && return 1
+    
     local to_delete=()
     local to_del_h=()
     while read sel_symdfd_; do
@@ -297,8 +301,13 @@ show_year_month_for_deletion () {
 	str+="$line __________Entries_from_$(echo $line | cut -d+ -f3)_$(echo $line | cut -d+ -f2) "
     done < <(echo "$YEAR_MONTH" | tr ':' '\n')
 
-    sel_sym=$(whiptail --title "VETMEDIN" --menu "Entries" 25 78 16 $str 3>&1 1>&2 2>&3)
-    show_year_month_day_for_deletion $sel_sym
+    sel_symfd=$(whiptail --title "VETMEDIN" --menu "Entries" 25 78 16 $str 3>&1 1>&2 2>&3)
+
+    local cancel=$?
+    [[ -z "$sel_symfd" ]] && return 1
+    [[ "$cancel" -gt 0 ]] && return 1
+    
+    show_year_month_day_for_deletion $sel_symfd
 }
 
 # main menu entry
