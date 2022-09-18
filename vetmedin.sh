@@ -114,6 +114,10 @@ edit_old_entry () {
     # show initial OLD_DATA
     while read id; do
 	yn=$(jq -r --argjson i $id '.items[]|select(.id==$i)|.t' <<<"$OLD_DATA")
+
+	# fix for new item added to items.json
+	[[ -z "$yn" ]] && yn="N"
+	
 	desc=$(jq -r --argjson i $id '.[]|select(.id==$i)|.desc' items.json)
 	str_eoe+="${secs_epoch},${id},${yn} $desc OFF "
     done < <(jq -c '.[].id' items.json)
@@ -320,7 +324,7 @@ delete_entries () {
 # show checklst and toggle items yes/no
 
 NEW_DATA=$(cat <<END
-{ "secs_epoch": -1, "items": [ { "id": 0, "t": "N" }, { "id": 1, "t": "N" }, { "id": 2, "t": "N" }, { "id": 3, "t": "N" }, { "id": 4, "t": "N" }, { "id": 5, "t": "N" }, { "id": 6, "t": "N" }, { "id": 7, "t": "N" }, { "id": 8, "t": "N" } ] }	     
+{ "secs_epoch": -1, "items": [ { "id": 0, "t": "N" }, { "id": 1, "t": "N" }, { "id": 2, "t": "N" }, { "id": 3, "t": "N" }, { "id": 4, "t": "N" }, { "id": 5, "t": "N" }, { "id": 6, "t": "N" }, { "id": 7, "t": "N" }, { "id": 8, "t": "N" }, { "id": 9, "t": "N" }, { "id": 10, "t": "N" }, { "id": 11, "t": "N" } ] }	     
 END
 )
 
@@ -469,6 +473,9 @@ report () {
     #local feed=$(jq -r '.[]|(.secs_epoch) as $s|.items[]|.id as $id|.t as $t|($s|tostring)+"|"+($id|tostring)+"|"+$t' data.json | sort)
     local feed=$(jq -r --argjson s1 "$s1" --argjson s2 "$s2" '.[]|select(.secs_epoch>=$s1 and .secs_epoch<=$s2)|(.secs_epoch) as $s|.items[]|.id as $id|.t as $t|($s|tostring)+"|"+($id|tostring)+"|"+$t' data.json | sort)
     local str=""
+
+    # if feed has no match then return out
+    [[ -z "$feed" ]] && return 1
     
     while read f; do
 	local date=$(date -d @"$(echo "$f" | cut -d'|' -f1)")
